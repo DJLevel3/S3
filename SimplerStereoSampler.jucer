@@ -7,7 +7,7 @@
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
               pluginDesc="A stereo sampler with no stretching!" pluginManufacturerCode="DJL3"
               pluginManufacturer="DJ_Level_3" pluginCode="Sss1" pluginChannelConfigs="{0, 2}"
-              pluginVST3Category="Instrument,Sampler">
+              pluginVST3Category="Instrument,Sampler" version="1.0.0">
   <MAINGROUP id="qnPAZi" name="SimplerStereoSampler">
     <GROUP id="{BD2CF0A0-EFC9-4490-10F8-C7FAAD2FAE5A}" name="Source">
       <FILE id="dgokZ1" name="SamplerSynthesizer.cpp" compile="1" resource="0"
