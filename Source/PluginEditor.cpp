@@ -73,6 +73,10 @@ void SimplerStereoSamplerAudioProcessorEditor::buttonClicked(juce::Button* butto
         audioProcessor.synth.chooseNextSample();
         updateSample();
     }
+    else if (button == &prevSampleButton) {
+        audioProcessor.synth.choosePrevSample();
+        updateSample();
+    }
     else if (button == &ejectSampleButton) {
         audioProcessor.synth.unloadSample(audioProcessor.synth.getCurrentSample());
         audioProcessor.synth.chooseNextSample();

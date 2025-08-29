@@ -131,6 +131,20 @@ public:
         return -1;
     }
 
+    int choosePrevSample() {
+        for (int i = currentSample - 1; i >= 0; i--) {
+            if (samples[i].loaded) {
+                return chooseSample(i);
+            }
+        }
+        for (int i = MAX_SAMPLES - 1; i >= currentSample; i--) {
+            if (samples[i].loaded) {
+                return chooseSample(i);
+            }
+        }
+        return -1;
+    }
+
     void getXmlState(juce::XmlElement* parent);
     void loadXmlState(juce::XmlElement* state);
 
