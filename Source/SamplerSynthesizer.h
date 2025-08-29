@@ -88,6 +88,7 @@ public:
                 numSamples++;
             }
         }
+        return loaded;
     }
 
     void noteOn(int number);
