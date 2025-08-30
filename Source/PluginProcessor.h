@@ -12,9 +12,10 @@
 #include "SamplerSynthesizer.h"
 
 struct MidiOnOff {
-    int time;
-    int note;
-    bool on;
+    int time = 0;
+    int note = 0;
+    bool on = false;
+    bool transport = false;
     static bool sortTime(const MidiOnOff& a, const MidiOnOff& b)
     {
         return a.time < b.time;
@@ -72,10 +73,17 @@ public:
 
     SamplerSynthesizer synth;
 
-private:
     juce::AudioParameterInt* slotNum;
     juce::AudioParameterBool* resetOne;
     juce::AudioParameterBool* resetAll;
+    juce::AudioParameterBool* resetStart;
+
+private:
+    int lastSlotNum = 0;
+    bool lastResetOne = false;
+    bool lastResetAll = false;
+    bool lastResetStart = true;
+    bool lastPlaying = false;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimplerStereoSamplerAudioProcessor)
 };

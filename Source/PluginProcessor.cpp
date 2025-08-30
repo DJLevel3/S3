@@ -16,6 +16,7 @@ SimplerStereoSamplerAudioProcessor::SimplerStereoSamplerAudioProcessor()
     addParameter(slotNum = new juce::AudioParameterInt("slotNum", "Slot #", 0, MAX_SAMPLES - 1, 0));
     addParameter(resetOne = new juce::AudioParameterBool("resetOne", "Reset Current", false));
     addParameter(resetAll = new juce::AudioParameterBool("resetAll", "Reset All", false));
+    addParameter(resetStart = new juce::AudioParameterBool("resetStart", "Reset on Transport Start", true));
 
     slotNum->addListener(this);
     resetOne->addListener(this);
@@ -29,18 +30,33 @@ SimplerStereoSamplerAudioProcessor::~SimplerStereoSamplerAudioProcessor()
 
 void SimplerStereoSamplerAudioProcessor::parameterValueChanged(int parameterIndex, float newValue) {
     if (parameterIndex == slotNum->getParameterIndex()) {
-        synth.chooseSample(*slotNum);
+        if (*slotNum != lastSlotNum) {
+            synth.chooseSample(*slotNum);
+            lastSlotNum = *slotNum;
+            sendChangeMessage();
+        }
     }
     else if (parameterIndex == resetOne->getParameterIndex()) {
-        synth.reset();
+        if (*resetOne != lastResetOne) {
+            synth.reset();
+            lastResetOne = *resetOne;
+        }
     }
     else if (parameterIndex == resetAll->getParameterIndex()) {
-        synth.resetAllSamples();
+        if (*resetOne != lastResetOne) {
+            synth.resetAllSamples();
+            lastResetAll = *resetAll;
+        }
+    }
+    else if (parameterIndex == resetStart->getParameterIndex()) {
+        if (*resetStart != lastResetStart) {
+            lastResetStart = *resetStart;
+            sendChangeMessage();
+        }
     }
     else {
         return;
     }
-    sendChangeMessage();
 }
 
 //==============================================================================
@@ -124,6 +140,18 @@ void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>&
 
     std::vector<MidiOnOff> mid;
     MidiOnOff tempMid;
+    juce::AudioPlayHead* transport = getPlayHead();
+    auto transportState = transport->getPosition();
+    if (transportState.hasValue()) {
+        if (transportState->getIsPlaying() && lastPlaying == false) {
+            tempMid.time = 0;
+            tempMid.note = 0;
+            tempMid.on = true;
+            tempMid.transport = true;
+            mid.push_back(tempMid);
+        }
+        lastPlaying = transportState->getIsPlaying();
+    }
     for (auto it : midiMessages)
     {
         juce::MidiMessage msg = it.getMessage();
@@ -131,6 +159,7 @@ void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>&
             tempMid.time = msg.getTimeStamp();
             tempMid.note = msg.getNoteNumber();
             tempMid.on = msg.isNoteOn();
+            tempMid.transport = false;
             mid.push_back(tempMid);
         }
     }
@@ -144,11 +173,12 @@ void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>&
     else {
         while (messageNow < numMessages) {
             if (mid[messageNow].time > timeNow) synth.processBlock(buffer, timeNow, mid[messageNow].time);
-            if (mid[messageNow].on) {
-                synth.noteOn(mid[messageNow].note);
-            }
-            else {
-                synth.noteOff(mid[messageNow].note);
+            if (mid[messageNow].transport == false) {
+                // This is a midi note, handle that
+                synth.noteMessage(mid[messageNow].note, mid[messageNow].on);
+            } else if (*resetStart && (mid[messageNow].on == true)) {
+                // Transport is starting and we want to reset when that happens
+                synth.resetAllSamples();
             }
             messageNow++;
         }
@@ -174,8 +204,17 @@ void SimplerStereoSamplerAudioProcessor::getStateInformation (juce::MemoryBlock&
 {
     std::unique_ptr<juce::XmlElement> s3(new juce::XmlElement("S3"));
     s3->setAttribute("slotNum", *slotNum);
+    s3->setAttribute("lastSlotNum", lastSlotNum);
+
     s3->setAttribute("resetOne", *resetOne);
+    s3->setAttribute("lastResetOne", lastResetOne);
+
     s3->setAttribute("resetAll", *resetAll);
+    s3->setAttribute("lastResetAll", lastResetAll);
+
+    s3->setAttribute("resetStart", *resetStart);
+    s3->setAttribute("lastResetStart", lastResetStart);
+
     synth.getXmlState(s3.get());
     copyXmlToBinary(*s3, destData);
 }
@@ -186,10 +225,19 @@ void SimplerStereoSamplerAudioProcessor::setStateInformation (const void* data, 
     if (s3State.get() != nullptr) {
         if (s3State->hasTagName("S3")) {
             *slotNum = s3State->getIntAttribute("slotNum", 0);
+            lastSlotNum = s3State->getIntAttribute("lastSlotNum", 0);
+
             *resetOne = s3State->getBoolAttribute("resetOne", false);
+            lastResetOne = s3State->getBoolAttribute("lastResetOne", false);
+
             *resetAll = s3State->getBoolAttribute("resetAll", false);
+            lastResetAll = s3State->getBoolAttribute("lastResetAll", false);
+
+            *resetStart = s3State->getBoolAttribute("resetStart", true);
+            lastResetStart = s3State->getBoolAttribute("lastResetStart", true);
+
+            synth.loadXmlState(s3State->getChildByName("Synth"));
         }
-        synth.loadXmlState(s3State->getChildByName("Synth"));
     }
 }
 

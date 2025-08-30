@@ -30,7 +30,7 @@ SimplerStereoSamplerAudioProcessorEditor::SimplerStereoSamplerAudioProcessorEdit
 
     addAndMakeVisible(ejectSampleButton);
     ejectSampleButton.setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(128, 40, 40));
-    ejectSampleButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour::fromRGB(255, 40, 40));
+    ejectSampleButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour::fromRGB(128, 40, 40));
     ejectSampleButton.addListener(this);
 
     addAndMakeVisible(resetButton);
@@ -42,16 +42,16 @@ SimplerStereoSamplerAudioProcessorEditor::SimplerStereoSamplerAudioProcessorEdit
     addAndMakeVisible(panicButton);
     panicButton.addListener(this);
     panicButton.setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(128, 40, 40));
-    panicButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour::fromRGB(255, 40, 40));
-
+    panicButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour::fromRGB(128, 40, 40));
 
     addAndMakeVisible(sampleNameBox);
     sampleNameBox.setJustificationType(juce::Justification::centred);
+    sampleNameBox.setEditable(false, false);
+    sampleNameBox.setColour(juce::Label::outlineColourId, getLookAndFeel().findColour(juce::Label::textColourId));
 
     updateSample();
 
     audioProcessor.addChangeListener(this);
-
 }
 
 SimplerStereoSamplerAudioProcessorEditor::~SimplerStereoSamplerAudioProcessorEditor()
@@ -112,8 +112,11 @@ void SimplerStereoSamplerAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour (juce::Colours::white);
     auto textArea = getLocalBounds().reduced(5).removeFromTop(BOX_H);
 
-    g.setFont (juce::FontOptions (30.0f));
-    g.drawFittedText("S3", textArea.removeFromLeft(BOX_W).reduced(5), juce::Justification::centred, 1);
+    g.setFont (juce::FontOptions (24.0f));
+    g.drawFittedText("S3 v" + juce::String(ProjectInfo::versionString), textArea.removeFromLeft(BOX_W).reduced(5), juce::Justification::centred, 2, 1.0f);
+
+    g.setFont(juce::FontOptions(18.0f));
+    g.drawFittedText(juce::String("DJ_Level_3\n2025"), textArea.removeFromRight(BOX_W).reduced(5), juce::Justification::centred, 2, 1.0f);
 }
 
 void SimplerStereoSamplerAudioProcessorEditor::resized()
@@ -136,9 +139,19 @@ void SimplerStereoSamplerAudioProcessorEditor::resized()
     sampleNameBox.setBounds(areaA.reduced(5));
 }
 
-
 void SimplerStereoSamplerAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source) {
     if (source == &audioProcessor) {
         updateSample();
     }
+}
+
+void SimplerStereoSamplerAudioProcessorEditor::updateSample() {
+    if (audioProcessor.synth.getCurrentSampleName() == "Not Loaded") {
+        sampleNameBox.setColour(juce::Label::textColourId, juce::Colour::fromRGB(192, 40, 40));
+    }
+    else {
+        sampleNameBox.setColour(juce::Label::textColourId, getLookAndFeel().findColour(juce::Label::textColourId));
+
+    }
+    sampleNameBox.setText("Slot " + juce::String(audioProcessor.synth.getCurrentSample()) + " - " + audioProcessor.synth.getCurrentSampleName(), juce::dontSendNotification);
 }

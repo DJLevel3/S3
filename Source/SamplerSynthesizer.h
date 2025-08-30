@@ -96,6 +96,10 @@ public:
     void noteOff() {
         playing = false;
     }
+    void noteMessage(int number, int on) {
+        if (on) noteOn(number);
+        else noteOff(number);
+    }
 
     void reset(int pos);
     void reset() {

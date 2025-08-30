@@ -32,9 +32,7 @@ public:
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
 private:
-    void updateSample() {
-        sampleNameBox.setText("Slot " + juce::String(audioProcessor.synth.getCurrentSample()) + " - " + audioProcessor.synth.getCurrentSampleName(), juce::dontSendNotification);
-    }
+    void updateSample();
     double rootFrequency = 55;
     juce::File fileToLoad{""};
     void buttonClicked(juce::Button* button) override;
