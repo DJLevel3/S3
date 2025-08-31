@@ -37,7 +37,7 @@ void SamplerSynthesizer::processBlock(juce::AudioBuffer<float>& buffer, int begi
 
     for (int i = 0; i < MAX_SAMPLES; i++) {
         if (samples[i].waitingForReset) {
-            frequency = targetFrequency;
+            frequency = targetFrequency * frequencyFactor;
             sourceFrequency = targetFrequency;
             samples[i].sampleTime = 0;
             samples[i].waitingForReset = false;
@@ -117,8 +117,8 @@ int SamplerSynthesizer::loadSample(juce::File audioFile, double rootFrequency, i
     samples[samplePosition].buffer = new juce::AudioBuffer<float>;
     samples[samplePosition].sampleTime = 0;
     samples[samplePosition].loaded = true;
-    samples[samplePosition].buffer->setSize(2, reader->lengthInSamples);
-    if (reader->read(samples[samplePosition].buffer, 0, reader->lengthInSamples, 0, true, true) == false) unloadSample(samplePosition);
+    samples[samplePosition].buffer->setSize(2, int(reader->lengthInSamples));
+    if (reader->read(samples[samplePosition].buffer, 0, int(reader->lengthInSamples), 0, true, true) == false) unloadSample(samplePosition);
     else if (samples[samplePosition].buffer->getNumSamples() < 1) unloadSample(samplePosition);
     recalculateNumSamples();
 
@@ -160,7 +160,7 @@ void SamplerSynthesizer::noteOn(int note) {
     this->note = note;
     sourceFrequency = targetFrequency;
     targetFrequency = midiNoteNumberToFrequency(note);
-    frequency = targetFrequency;
+    frequency = targetFrequency * frequencyFactor;
     if (samples[currentSample].waitingForReset) {
         time = 0;
         samples[currentSample].waitingForReset = false;
@@ -179,6 +179,7 @@ void SamplerSynthesizer::reset(int pos) {
 void SamplerSynthesizer::getXmlState(juce::XmlElement* parent) {
     juce::XmlElement* main = parent->createNewChildElement("Synth");
     main->setAttribute("waitingForOuterReset", waitingForOuterReset);
+    main->setAttribute("currentSample", currentSample);
     juce::XmlElement* slot = main;
     for (int i = 0; i < MAX_SAMPLES; i++) {
         if (samples[i].loaded) {
@@ -196,6 +197,7 @@ void SamplerSynthesizer::getXmlState(juce::XmlElement* parent) {
 void SamplerSynthesizer::loadXmlState(juce::XmlElement* state) {
     if (state == nullptr) return;
     waitingForOuterReset = state->getBoolAttribute("waitingForOuterReset", true);
+    currentSample = state->getIntAttribute("currentSample", 0);
     juce::XmlElement* slot = state->getChildByName("Slot");
     for (int i = 0; i < MAX_SAMPLES; i++) {
         if (slot != nullptr) {
@@ -208,5 +210,16 @@ void SamplerSynthesizer::loadXmlState(juce::XmlElement* state) {
             slot = slot->getChildByName("Slot");
         }
         else break;
+    }
+}
+
+void SamplerSynthesizer::transpose(int semitones, double cents) {
+    if (samples[currentSample].loaded) {
+        samples[currentSample].rootFrequency = samples[currentSample].rootFrequency * (std::pow(2.0, (semitones + (cents / 100.0)) / 12.0));
+    }
+}
+void SamplerSynthesizer::transpose(double newFrequency) {
+    if (samples[currentSample].loaded) {
+        samples[currentSample].rootFrequency = std::max(0.1, newFrequency);
     }
 }

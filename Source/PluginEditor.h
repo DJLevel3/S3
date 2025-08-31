@@ -33,7 +33,6 @@ public:
 
 private:
     void updateSample();
-    double rootFrequency = 55;
     juce::File fileToLoad{""};
     void buttonClicked(juce::Button* button) override;
 
@@ -46,6 +45,10 @@ private:
     juce::TextButton resetAllButton{ "Reset ALL" };
     juce::TextButton panicButton{ "MIDI Panic!" };
     juce::Label sampleNameBox{ "sampleNameBox", "Slot 0 - Not Loaded" };
+
+    juce::Label transposeText{ "transposeText", "Transpose" };
+    juce::TextButton transposeUpButton{ "+1" };
+    juce::TextButton transposeDownButton{ "-1" };
 
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.

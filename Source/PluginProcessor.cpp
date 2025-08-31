@@ -17,10 +17,13 @@ SimplerStereoSamplerAudioProcessor::SimplerStereoSamplerAudioProcessor()
     addParameter(resetOne = new juce::AudioParameterBool("resetOne", "Reset Current", false));
     addParameter(resetAll = new juce::AudioParameterBool("resetAll", "Reset All", false));
     addParameter(resetStart = new juce::AudioParameterBool("resetStart", "Reset on Transport Start", true));
+    addParameter(frequencyFactor = new juce::AudioParameterFloat("frequencyFactor", "Frequency Factor", 0.0, 1.5, 1.0));
 
     slotNum->addListener(this);
     resetOne->addListener(this);
     resetAll->addListener(this);
+    resetStart->addListener(this);
+    frequencyFactor->addListener(this);
 }
 
 SimplerStereoSamplerAudioProcessor::~SimplerStereoSamplerAudioProcessor()
@@ -52,6 +55,12 @@ void SimplerStereoSamplerAudioProcessor::parameterValueChanged(int parameterInde
         if (*resetStart != lastResetStart) {
             lastResetStart = *resetStart;
             sendChangeMessage();
+        }
+    }
+    else if (parameterIndex == frequencyFactor->getParameterIndex()) {
+        if (lastFrequencyFactor != *frequencyFactor) {
+            synth.setFrequencyFactor((*frequencyFactor - 1.0) * 48.0);
+            lastFrequencyFactor = *frequencyFactor;
         }
     }
     else {
@@ -112,8 +121,7 @@ void SimplerStereoSamplerAudioProcessor::changeProgramName (int index, const juc
 //==============================================================================
 void SimplerStereoSamplerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    synth.prepareToPlay(sampleRate);
 }
 
 void SimplerStereoSamplerAudioProcessor::releaseResources()
@@ -125,8 +133,8 @@ void SimplerStereoSamplerAudioProcessor::releaseResources()
 void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
+    int totalNumInputChannels  = getTotalNumInputChannels();
+    int totalNumOutputChannels = getTotalNumOutputChannels();
 
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
@@ -156,7 +164,7 @@ void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>&
     {
         juce::MidiMessage msg = it.getMessage();
         if (msg.isNoteOnOrOff()) {
-            tempMid.time = msg.getTimeStamp();
+            tempMid.time = int(msg.getTimeStamp());
             tempMid.note = msg.getNoteNumber();
             tempMid.on = msg.isNoteOn();
             tempMid.transport = false;
@@ -165,7 +173,7 @@ void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>&
     }
     std::sort(mid.begin(), mid.end(), MidiOnOff::sortTime);
     int timeNow = 0;
-    int numMessages = mid.size();
+    int numMessages = int(mid.size());
     int messageNow = 0;
     if (numMessages == 0) {
         synth.processBlock(buffer, 0, buffer.getNumSamples());
@@ -215,6 +223,9 @@ void SimplerStereoSamplerAudioProcessor::getStateInformation (juce::MemoryBlock&
     s3->setAttribute("resetStart", *resetStart);
     s3->setAttribute("lastResetStart", lastResetStart);
 
+    s3->setAttribute("frequencyFactor", *frequencyFactor);
+    s3->setAttribute("lastFrequencyFactor", lastFrequencyFactor);
+
     synth.getXmlState(s3.get());
     copyXmlToBinary(*s3, destData);
 }
@@ -235,6 +246,9 @@ void SimplerStereoSamplerAudioProcessor::setStateInformation (const void* data, 
 
             *resetStart = s3State->getBoolAttribute("resetStart", true);
             lastResetStart = s3State->getBoolAttribute("lastResetStart", true);
+
+            *frequencyFactor = float(s3State->getDoubleAttribute("frequencyFactor", 1.0));
+            lastFrequencyFactor = float(s3State->getDoubleAttribute("lastFrequencyFactor", 1.0));
 
             synth.loadXmlState(s3State->getChildByName("Synth"));
         }

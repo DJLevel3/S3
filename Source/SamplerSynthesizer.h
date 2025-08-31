@@ -41,9 +41,6 @@ public:
     void processBlock(juce::AudioBuffer<float>& buffer, int beginSample, int endSample);
 
     int loadSample(juce::File audioFile, double rootFrequency, int samplePosition, bool loop = true);
-    int loadSample(juce::File audioFile, int rootNote, int samplePosition, bool loop = true) {
-        return loadSample(audioFile, midiNoteNumberToFrequency(rootNote), samplePosition, loop);
-    }
 
     bool unloadSample(int samplePosition);
     int chooseSample(int samplePosition);
@@ -153,6 +150,23 @@ public:
     void getXmlState(juce::XmlElement* parent);
     void loadXmlState(juce::XmlElement* state);
 
+    // accurate to 2^x above -3 octaves, drops to 0 from -3 to -4 octaves with continuous derivative
+    void setFrequencyFactor(double semitones) {
+        if (semitones <= -48) frequencyFactor = 0;
+        else if (semitones >= -36) frequencyFactor = std::pow(2.0, semitones/12.0);
+        else {
+            frequencyFactor = std::pow((semitones / 12.0) + 4.0, 0.6935) / 8.0;
+        }
+        frequency = targetFrequency * frequencyFactor;
+    }
+
+    void transpose(int semitones, double cents = 0);
+    void transpose(double newFrequency);
+
+    static double midiNoteNumberToFrequency(int midiNoteNumber) {
+        return 440.0 * std::pow(2.0, (midiNoteNumber - 69.0) / 12.0);
+    }
+
 private:
     void recalculateNumSamples() {
         numSamples = 0;
@@ -163,9 +177,6 @@ private:
         }
     }
 
-    static double midiNoteNumberToFrequency(int midiNoteNumber) {
-        return 440.0 * std::pow(2.0, (midiNoteNumber - 69.0) / 12.0);
-    }
 
     static float lerp_f(float start, float end, float t) {
         return (end - start) * t + start;
@@ -183,6 +194,7 @@ private:
     double frequency = -1;
     double sourceFrequency = -1;
     double targetFrequency = -1;
+    double frequencyFactor = 1;
 
     bool waitingForOuterReset = true;
 

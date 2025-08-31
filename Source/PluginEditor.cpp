@@ -49,6 +49,16 @@ SimplerStereoSamplerAudioProcessorEditor::SimplerStereoSamplerAudioProcessorEdit
     sampleNameBox.setEditable(false, false);
     sampleNameBox.setColour(juce::Label::outlineColourId, getLookAndFeel().findColour(juce::Label::textColourId));
 
+    addAndMakeVisible(transposeText);
+    transposeText.setJustificationType(juce::Justification::centred);
+    transposeText.setEditable(false, false);
+
+    addAndMakeVisible(transposeUpButton);
+    transposeUpButton.addListener(this);
+
+    addAndMakeVisible(transposeDownButton);
+    transposeDownButton.addListener(this);
+
     updateSample();
 
     audioProcessor.addChangeListener(this);
@@ -91,11 +101,17 @@ void SimplerStereoSamplerAudioProcessorEditor::buttonClicked(juce::Button* butto
     else if (button == &panicButton) {
         audioProcessor.synth.noteOff();
     }
+    else if (button == &transposeUpButton) {
+        audioProcessor.synth.transpose(-1);
+    }
+    else if (button == &transposeDownButton) {
+        audioProcessor.synth.transpose(1);
+    }
 }
 
 int SimplerStereoSamplerAudioProcessorEditor::loadFile(juce::File file) {
     if (file.getFileExtension() == ".wav" || file.getFileExtension() == ".flac") {
-        int s = audioProcessor.synth.loadSample(file, rootFrequency, audioProcessor.synth.getOpenSample(), true);
+        int s = audioProcessor.synth.loadSample(file, 55.0, audioProcessor.synth.getOpenSample(), true);
         if (s >= 0) {
             return audioProcessor.synth.chooseSample(s);
         }
@@ -114,9 +130,6 @@ void SimplerStereoSamplerAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setFont (juce::FontOptions (24.0f));
     g.drawFittedText("S3 v" + juce::String(ProjectInfo::versionString), textArea.removeFromLeft(BOX_W).reduced(5), juce::Justification::centred, 2, 1.0f);
-
-    g.setFont(juce::FontOptions(18.0f));
-    g.drawFittedText(juce::String("DJ_Level_3\n2025"), textArea.removeFromRight(BOX_W).reduced(5), juce::Justification::centred, 2, 1.0f);
 }
 
 void SimplerStereoSamplerAudioProcessorEditor::resized()
@@ -126,6 +139,9 @@ void SimplerStereoSamplerAudioProcessorEditor::resized()
 
     areaA.removeFromLeft(BOX_W); // Title text
     loadButton.setBounds(areaA.removeFromLeft(BOX_W * 2).reduced(5));
+    transposeText.setBounds(areaA.removeFromTop(BOX_H / 3));
+    transposeUpButton.setBounds(areaA.removeFromRight(BOX_W / 2).reduced(5));
+    transposeDownButton.setBounds(areaA.reduced(5));
 
     areaA = bounds.removeFromBottom(BOX_H);
     resetButton.setBounds(areaA.removeFromRight(BOX_W).reduced(5));

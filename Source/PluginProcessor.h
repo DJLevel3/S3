@@ -78,12 +78,15 @@ public:
     juce::AudioParameterBool* resetAll;
     juce::AudioParameterBool* resetStart;
 
+    juce::AudioParameterFloat* frequencyFactor;
+
 private:
     int lastSlotNum = 0;
     bool lastResetOne = false;
     bool lastResetAll = false;
     bool lastResetStart = true;
     bool lastPlaying = false;
+    float lastFrequencyFactor;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimplerStereoSamplerAudioProcessor)
 };

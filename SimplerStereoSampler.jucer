@@ -7,7 +7,8 @@
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
               pluginDesc="A stereo sampler with no stretching!" pluginManufacturerCode="DJL3"
               pluginManufacturer="DJ_Level_3" pluginCode="Sss1" pluginChannelConfigs="{0, 2}"
-              pluginVST3Category="Instrument,Sampler" version="1.1.0" bundleIdentifier="com.djlevel3.s3">
+              pluginVST3Category="Instrument,Sampler" version="1.1.0" bundleIdentifier="com.djlevel3.s3"
+              defines="S3_EXTENDED=1">
   <MAINGROUP id="qnPAZi" name="SimplerStereoSampler">
     <GROUP id="{BD2CF0A0-EFC9-4490-10F8-C7FAAD2FAE5A}" name="Source">
       <FILE id="dgokZ1" name="SamplerSynthesizer.cpp" compile="1" resource="0"
@@ -62,7 +63,7 @@
         <MODULEPATH id="juce_gui_extra" path="../../../../../JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
-    <VS2022 targetFolder="Builds/VisualStudio2022">
+    <VS2022 targetFolder="Builds/VisualStudio2022" extraCompilerFlags="/wd4100 /wd4458">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="SimplerStereoSampler" enablePluginBinaryCopyStep="1"
                        useRuntimeLibDLL="0"/>
