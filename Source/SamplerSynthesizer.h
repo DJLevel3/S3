@@ -44,7 +44,6 @@ public:
 
     bool unloadSample(int samplePosition);
     int chooseSample(int samplePosition);
-    bool moveSample(int sourcePosition, int destPosition, bool force);
 
     int getNumSamples() {
         return numSamples;

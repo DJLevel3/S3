@@ -150,11 +150,6 @@ int SamplerSynthesizer::chooseSample(int samplePosition) {
     return currentSample;
 }
 
-// TODO - does nothing for now
-bool SamplerSynthesizer::moveSample(int sourcePosition, int destPosition, bool force) {
-    return false;
-}
-
 void SamplerSynthesizer::noteOn(int note) {
     playing = true;
     this->note = note;
