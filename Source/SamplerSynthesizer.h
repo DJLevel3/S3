@@ -166,6 +166,10 @@ public:
         return 440.0 * std::pow(2.0, (midiNoteNumber - 69.0) / 12.0);
     }
 
+    void setTuning(int cents) {
+        tuning = (std::pow(2.0, (cents / 1200)));
+    }
+
 private:
     void recalculateNumSamples() {
         numSamples = 0;
@@ -191,6 +195,7 @@ private:
     int note = -1;
     bool playing = false;
     double frequency = -1;
+    double tuning = 1;
     double sourceFrequency = -1;
     double targetFrequency = -1;
     double frequencyFactor = 1;

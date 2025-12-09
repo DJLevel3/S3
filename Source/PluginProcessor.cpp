@@ -18,12 +18,14 @@ SimplerStereoSamplerAudioProcessor::SimplerStereoSamplerAudioProcessor()
     addParameter(resetAll = new juce::AudioParameterBool("resetAll", "Reset All", false));
     addParameter(resetStart = new juce::AudioParameterBool("resetStart", "Reset on Transport Start", true));
     addParameter(frequencyFactor = new juce::AudioParameterFloat("frequencyFactor", "Frequency Factor", 0.0, 1.5, 1.0));
+    addParameter(tuning = new juce::AudioParameterInt("tuning", "Tuning", -100, 100, 0));
 
     slotNum->addListener(this);
     resetOne->addListener(this);
     resetAll->addListener(this);
     resetStart->addListener(this);
     frequencyFactor->addListener(this);
+    tuning->addListener(this);
 }
 
 SimplerStereoSamplerAudioProcessor::~SimplerStereoSamplerAudioProcessor()
@@ -58,9 +60,15 @@ void SimplerStereoSamplerAudioProcessor::parameterValueChanged(int parameterInde
         }
     }
     else if (parameterIndex == frequencyFactor->getParameterIndex()) {
-        if (lastFrequencyFactor != *frequencyFactor) {
+        if (*frequencyFactor != lastFrequencyFactor) {
             synth.setFrequencyFactor((*frequencyFactor - 1.0) * 48.0);
             lastFrequencyFactor = *frequencyFactor;
+        }
+    }
+    else if (parameterIndex == tuning->getParameterIndex()) {
+        if (*tuning != lastTuning) {
+            synth.setTuning(*tuning);
+            lastTuning = *tuning;
         }
     }
     else {
@@ -226,6 +234,9 @@ void SimplerStereoSamplerAudioProcessor::getStateInformation (juce::MemoryBlock&
     s3->setAttribute("frequencyFactor", *frequencyFactor);
     s3->setAttribute("lastFrequencyFactor", lastFrequencyFactor);
 
+    s3->setAttribute("tuning", *tuning);
+    s3->setAttribute("lastTuning", lastTuning);
+
     synth.getXmlState(s3.get());
     copyXmlToBinary(*s3, destData);
 }
@@ -249,6 +260,9 @@ void SimplerStereoSamplerAudioProcessor::setStateInformation (const void* data, 
 
             *frequencyFactor = float(s3State->getDoubleAttribute("frequencyFactor", 1.0));
             lastFrequencyFactor = float(s3State->getDoubleAttribute("lastFrequencyFactor", 1.0));
+
+            *tuning = s3State->getIntAttribute("tuning", 0);
+            lastTuning = s3State->getIntAttribute("lastTuning", 0);
 
             synth.loadXmlState(s3State->getChildByName("Synth"));
         }
