@@ -78,7 +78,7 @@ void SamplerSynthesizer::processBlock(juce::AudioBuffer<float>& buffer, int begi
             }
         }
         // Increment time
-        double increment = tuning * samples[currentSample].rootSampleRate / samples[currentSample].rootFrequency * frequency / sampleRate;
+        double increment = pitchBend * tuning * samples[currentSample].rootSampleRate / samples[currentSample].rootFrequency * frequency / sampleRate;
         time = time + increment;
         sampleNow++;
         

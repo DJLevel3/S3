@@ -170,6 +170,10 @@ public:
         tuning = (std::pow(2.0, (cents / 1200)));
     }
 
+    void setPitchBend(float wheelPosition) {
+        pitchBend = std::pow(2.0, wheelPosition * 2.0 / 12.0);
+    }
+
 private:
     void recalculateNumSamples() {
         numSamples = 0;
@@ -196,6 +200,7 @@ private:
     bool playing = false;
     double frequency = -1;
     double tuning = 1;
+    double pitchBend = 1;
     double sourceFrequency = -1;
     double targetFrequency = -1;
     double frequencyFactor = 1;

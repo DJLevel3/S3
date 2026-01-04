@@ -16,6 +16,7 @@ struct MidiOnOff {
     int note = 0;
     bool on = false;
     bool transport = false;
+    bool cc = false;
     static bool sortTime(const MidiOnOff& a, const MidiOnOff& b)
     {
         return a.time < b.time;
@@ -88,6 +89,7 @@ private:
     bool lastResetStart = true;
     bool lastPlaying = false;
     float lastFrequencyFactor;
+    float pitchBend = 0.f; // -1 to +1
     int lastTuning;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimplerStereoSamplerAudioProcessor)

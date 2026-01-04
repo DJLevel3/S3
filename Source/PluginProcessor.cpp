@@ -164,6 +164,7 @@ void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>&
             tempMid.note = 0;
             tempMid.on = true;
             tempMid.transport = true;
+            tempMid.cc = false;
             mid.push_back(tempMid);
         }
         lastPlaying = transportState->getIsPlaying();
@@ -176,6 +177,15 @@ void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>&
             tempMid.note = msg.getNoteNumber();
             tempMid.on = msg.isNoteOn();
             tempMid.transport = false;
+            tempMid.cc = false;
+            mid.push_back(tempMid);
+        }
+        if (msg.isPitchWheel()) {
+            tempMid.time = int(msg.getTimeStamp());
+            tempMid.note = msg.getPitchWheelValue();
+            tempMid.on = true;
+            tempMid.transport = false;
+            tempMid.cc = true;
             mid.push_back(tempMid);
         }
     }
@@ -189,12 +199,15 @@ void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>&
     else {
         while (messageNow < numMessages) {
             if (mid[messageNow].time > timeNow) synth.processBlock(buffer, timeNow, mid[messageNow].time);
-            if (mid[messageNow].transport == false) {
-                // This is a midi note, handle that
-                synth.noteMessage(mid[messageNow].note, mid[messageNow].on);
-            } else if (*resetStart && (mid[messageNow].on == true)) {
+            if (mid[messageNow].cc) {
+                // This is a pitch bend
+                pitchBendFactor = (mid[messageNow].note - 8192) / 8192.f;
+            } else if (mid[messageNow].transport) {
                 // Transport is starting and we want to reset when that happens
                 synth.resetAllSamples();
+            } else if (*resetStart && (mid[messageNow].on == true)) {
+                // This is a midi note, handle that
+                synth.noteMessage(mid[messageNow].note, mid[messageNow].on);
             }
             messageNow++;
         }
@@ -237,6 +250,8 @@ void SimplerStereoSamplerAudioProcessor::getStateInformation (juce::MemoryBlock&
     s3->setAttribute("tuning", *tuning);
     s3->setAttribute("lastTuning", lastTuning);
 
+    s3->setAttribute("pitchBend", pitchBend);
+
     synth.getXmlState(s3.get());
     copyXmlToBinary(*s3, destData);
 }
@@ -264,7 +279,12 @@ void SimplerStereoSamplerAudioProcessor::setStateInformation (const void* data, 
             *tuning = s3State->getIntAttribute("tuning", 0);
             lastTuning = s3State->getIntAttribute("lastTuning", 0);
 
+            pitchBend = s3State->getDoubleAttribute("pitchBendFactor", 0.0);
+
             synth.loadXmlState(s3State->getChildByName("Synth"));
+
+            synth.setTuning(*tuning);
+            synth.setPitchBend(pitchBend);
         }
     }
 }
