@@ -78,7 +78,8 @@ void SamplerSynthesizer::processBlock(juce::AudioBuffer<float>& buffer, int begi
             }
         }
         // Increment time
-        double increment = pitchBend * tuning * samples[currentSample].rootSampleRate / samples[currentSample].rootFrequency * frequency / sampleRate;
+        double actualPB = lerp_f(lastPB, pitchBend, (sampleNow - beginSample) / float(endSample - beginSample));
+        double increment = tuning * samples[currentSample].rootSampleRate / samples[currentSample].rootFrequency * frequency / sampleRate * actualPB;
         time = time + increment;
         sampleNow++;
         
@@ -99,6 +100,7 @@ void SamplerSynthesizer::processBlock(juce::AudioBuffer<float>& buffer, int begi
             }
         }
     }
+     lastPB = pitchBend;
 }
 
 // Returns -1 if sample is occupied, -2 if sample position is out of bounds, -3 if file is invalid, -4 if file loading failed, otherwise returns position of loaded sample

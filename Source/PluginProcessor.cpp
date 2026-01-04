@@ -198,16 +198,20 @@ void SimplerStereoSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>&
     }
     else {
         while (messageNow < numMessages) {
-            if (mid[messageNow].time > timeNow) synth.processBlock(buffer, timeNow, mid[messageNow].time);
+            if (mid[messageNow].time > timeNow) {
+                synth.processBlock(buffer, timeNow, mid[messageNow].time);
+                timeNow = mid[messageNow].time;
+            }
             if (mid[messageNow].cc) {
                 // This is a pitch bend
-                pitchBendFactor = (mid[messageNow].note - 8192) / 8192.f;
-            } else if (mid[messageNow].transport) {
-                // Transport is starting and we want to reset when that happens
-                synth.resetAllSamples();
-            } else if (*resetStart && (mid[messageNow].on == true)) {
+                pitchBend = (mid[messageNow].note - 8192) / 8192.f;
+                synth.setPitchBend(pitchBend);
+            } else if (mid[messageNow].transport == false) {
                 // This is a midi note, handle that
                 synth.noteMessage(mid[messageNow].note, mid[messageNow].on);
+            } else if (*resetStart && (mid[messageNow].on == true)) {
+                // Transport is starting and we want to reset when that happens
+                synth.resetAllSamples();
             }
             messageNow++;
         }
